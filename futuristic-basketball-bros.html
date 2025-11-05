@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Basketball</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Orbitron', monospace;
+        }
+        body {
+            background: linear-gradient(135deg, #0a0a0a, #1a1a2e, #16213e);
+            overflow: hidden;
+            color: #00ffff;
+        }
+
+        /* Custom scrollbar for main menu */
+        #mainMenu::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #mainMenu::-webkit-scrollbar-track {
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        #mainMenu::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            border-radius: 10px;
+        }
+
+        #mainMenu::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #ff00ff, #00ffff);
+        }
+        
+        #gameCanvas {
+            background: linear-gradient(90deg, #2d1b69, #11998e, #2d1b69);
+            border: 3px solid #00ffff;
+            box-shadow: 0 0 30px #00ffff;
+            display: block;
+        }
+        
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        #scoreBoard {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+            padding: 15px 30px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        #player1Score, #player2Score {
+            font-size: 2.5em;
+            font-weight: 900;
+            text-shadow: 0 0 10px #00ffff;
+            display: inline-block;
+            margin: 0 20px;
+        }
+        
+        #timer {
+            font-size: 1.2em;
+            margin-top: 10px;
+            color: #ffff00;
+            text-shadow: 0 0 5px #ffff00;
+        }
+        
+        #powerMeter {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        #powerBar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
+            transition: width 0.1s;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9em;
+            color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+        }
+        
+        .control-group {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            border-radius: 10px;
+            padding: 10px;
+            backdrop-filter: blur(5px);
+        }
+
+        #mainMenu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 100;
+            pointer-events: all;
+            overflow-y: auto;
+            padding: 20px 0;
+        }
+
+        #mainMenu h1 {
+            font-size: 3em;
+            font-weight: 900;
+            text-shadow: 0 0 30px #00ffff;
+            margin: 20px 0 30px 0;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            position: sticky;
+            top: 20px;
+        }
+
+        .menu-section {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 15px 20px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+        }
+
+        .menu-section h3 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .skin-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .skin-option {
+            width: 60px;
+            height: 60px;
+            border: 3px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.7em;
+        }
+
+        .skin-option:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px;
+        }
+
+        .skin-option.selected {
+            border-color: #ffff00;
+            box-shadow: 0 0 15px #ffff00;
+        }
+
+        .game-mode-btn {
+            background: linear-gradient(45deg, #00ffff, #0080ff);
+            border: none;
+            color: #000;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+        }
+
+        .game-mode-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px #00ffff;
+        }
+
+        .game-mode-btn.ai {
+            background: linear-gradient(45deg, #ff00ff, #ff0080);
+        }
+
+        .difficulty-selector {
+            margin: 20px 0;
+        }
+
+        .difficulty-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            padding: 10px 20px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+
+        .difficulty-btn:hover, .difficulty-btn.selected {
+            background: #00ffff;
+            color: #000;
+            box-shadow: 0 0 15px #00ffff;
+        }
+
+        .ai-character {
+            transition: all 0.3s;
+        }
+        .ai-character:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255,255,255,0.3);
+        }
+        .ai-character.selected {
+            border: 2px solid #ffff00 !important;
+            box-shadow: 0 0 20px #ffff00;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="mainMenu">
+        <h1>Neon Basketball</h1>
+        
+        <div class="menu-section">
+            <h3>PLAYER 1 SKIN</h3>
+            <div class="skin-grid" id="player1Skins">
+                <div class="skin-option selected" data-color="#00ffff" style="background: #00ffff; color: #000;">CYAN</div>
+                <div class="skin-option" data-color="#00ff00" style="background: #00ff00; color: #000;">NEON</div>
+                <div class="skin-option" data-color="#ffff00" style="background: #ffff00; color: #000;">GOLD</div>
+                <div class="skin-option" data-color="#ff8000" style="background: #ff8000; color: #000;">FIRE</div>
+                <div class="skin-option" data-color="#8000ff" style="background: #8000ff;">VOID</div>
+                <div class="skin-option" data-color="#ff0080" style="background: #ff0080;">PINK</div>
+                <div class="skin-option" data-color="#80ff80" style="background: #80ff80; color: #000;">MINT</div>
+                <div class="skin-option" data-color="#ffffff" style="background: #ffffff; color: #000;">PURE</div>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <h3>PLAYER 2 SKIN</h3>
+            <div class="skin-grid" id="player2Skins">
+                <div class="skin-option" data-color="#00ffff" style="background: #00ffff; color: #000;">CYAN</div>
+                <div class="skin-option" data-color="#00ff00" style="background: #00ff00; color: #000;">NEON</div>
+                <div class="skin-option" data-color="#ffff00" style="background: #ffff00; color: #000;">GOLD</div>
+                <div class="skin-option" data-color="#ff8000" style="background: #ff8000; color: #000;">FIRE</div>
+                <div class="skin-option" data-color="#8000ff" style="background: #8000ff;">VOID</div>
+                <div class="skin-option selected" data-color="#ff00ff" style="background: #ff00ff;">MAGE</div>
+                <div class="skin-option" data-color="#80ff80" style="background: #80ff80; color: #000;">MINT</div>
+                <div class="skin-option" data-color="#ffffff" style="background: #ffffff; color: #000;">PURE</div>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <h3>GAME MODE</h3>
+            <button class="game-mode-btn" onclick="startGame('pvp')">PLAYER VS PLAYER</button>
+            <button class="game-mode-btn ai" id="aiModeBtn">PLAYER VS AI</button>
+            
+            <div class="difficulty-selector" id="difficultySelector" style="display: none;">
+                <h4 style="color: #ff00ff; margin-bottom: 10px;">AI CHARACTER</h4>
+                <div class="ai-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 15px 0;">
+                    <div class="ai-character selected" data-ai="shooter" style="background: rgba(0,255,255,0.2); border: 2px solid #00ffff; padding: 15px; border-radius: 10px; cursor: pointer; text-align: center;">
+                        <div style="font-weight: 700; color: #00ffff;">SHOOTER</div>
+                        <div style="font-size: 0.8em; margin-top: 5px;">Long range AI<br>Loves 3-pointers</div>
+                    </div>
+                    <div class="ai-character" data-ai="dunker" style="background: rgba(255,0,255,0.2); border: 2px solid transparent; padding: 15px; border-radius: 10px; cursor: pointer; text-align: center;">
+                        <div style="font-weight: 700; color: #ff00ff;">DUNKER</div>
+                        <div style="font-size: 0.8em; margin-top: 5px;">Aggressive AI<br>Drives to basket</div>
+                    </div>
+                    <div class="ai-character" data-ai="playmaker" style="background: rgba(255,255,0,0.2); border: 2px solid transparent; padding: 15px; border-radius: 10px; cursor: pointer; text-align: center;">
+                        <div style="font-weight: 700; color: #ffff00;">PLAYMAKER</div>
+                        <div style="font-size: 0.8em; margin-top: 5px;">Smart AI<br>Balanced offense</div>
+                    </div>
+                    <div class="ai-character" data-ai="wildcard" style="background: rgba(255,128,0,0.2); border: 2px solid transparent; padding: 15px; border-radius: 10px; cursor: pointer; text-align: center;">
+                        <div style="font-weight: 700; color: #ff8000;">WILDCARD</div>
+                        <div style="font-size: 0.8em; margin-top: 5px;">Unpredictable AI<br>Crazy shots</div>
+                    </div>
+                </div>
+                
+                <h4 style="color: #ff00ff; margin: 20px 0 10px 0;">DIFFICULTY</h4>
+                <button class="difficulty-btn selected" data-difficulty="easy">ROOKIE</button>
+                <button class="difficulty-btn" data-difficulty="medium">PRO</button>
+                <button class="difficulty-btn" data-difficulty="hard">ALL-STAR</button>
+                <button class="difficulty-btn" data-difficulty="insane">LEGEND</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="ui" style="display: none;">
+        <div id="scoreBoard">
+            <div>
+                <span id="player1Score">0</span>
+                <span style="font-size: 1.5em;">-</span>
+                <span id="player2Score">0</span>
+            </div>
+            <div id="timer">4:00</div>
+        </div>
+        <div id="powerMeter">
+            <div id="powerBar"></div>
+        </div>
+        <div id="controls">
+            <div class="control-group">
+                <strong>PLAYER 1</strong><br>
+                WASD: Move<br>
+                SPACE: Power Shot<br>
+                L-SHIFT: Steal/Block
+            </div>
+            <div class="control-group" id="player2Controls">
+                <strong>PLAYER 2</strong><br>
+                Arrow Keys: Move<br>
+                ENTER: Power Shot<br>
+                R-SHIFT: Steal/Block
+            </div>
+        </div>
+        <button id="menuBtn" style="position: absolute; top: 20px; right: 20px; background: rgba(255,0,0,0.8); border: none; color: white; padding: 10px 20px; border-radius: 5px; font-family: 'Orbitron', monospace; cursor: pointer; pointer-events: all;">MENU</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        let gameTime = 240; // 4 minutes for basketball
+        let gameRunning = false;
+        let particles = [];
+        let gameMode = 'pvp';
+        let aiDifficulty = 'easy';
+        let aiCharacter = 'shooter';
+        let aiPlayer = null;
+        
+        // Dunk board system
+        let dunkBoard = {
+            active: false,
+            x: 0,
+            y: 0,
+            width: 80,
+            height: 20,
+            timeLeft: 0,
+            nextSpawn: 0
+        };
+        
+        const player1 = {
+            x: canvas.width * 0.2,
+            y: canvas.height / 2,
+            width: 40,
+            height: 40,
+            speed: 6,
+            color: '#00ffff',
+            powerCharging: false,
+            powerLevel: 0,
+            hasBall: false,
+            tackling: false,
+            tackleRange: 60,
+            tackleCooldown: 0
+        };
+        
+        const player2 = {
+            x: canvas.width * 0.8,
+            y: canvas.height / 2,
+            width: 40,
+            height: 40,
+            speed: 6,
+            color: '#ff00ff',
+            powerCharging: false,
+            powerLevel: 0,
+            hasBall: false,
+            tackling: false,
+            tackleRange: 60,
+            tackleCooldown: 0
+        };
+        
+        const ball = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 12,
+            vx: 0,
+            vy: 0,
+            maxSpeed: 20,
+            owner: null,
+            bouncing: false,
+            lastShotX: 0,
+            lastShotY: 0
+        };
+        
+        // Basketball hoops
+        const hoop1 = { 
+            x: 50, 
+            y: canvas.height / 2 - 40, 
+            width: 15, 
+            height: 80,
+            rimY: canvas.height / 2 - 5
+        };
+        const hoop2 = { 
+            x: canvas.width - 65, 
+            y: canvas.height / 2 - 40, 
+            width: 15, 
+            height: 80,
+            rimY: canvas.height / 2 - 5
+        };
+        
+        let score1 = 0;
+        let score2 = 0;
+        
+        const keys = {};
+        
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            // Handle both shift keys
+            if (e.code === 'ShiftLeft') keys['shiftleft'] = true;
+            if (e.code === 'ShiftRight') keys['shiftright'] = true;
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+            // Handle both shift keys
+            if (e.code === 'ShiftLeft') keys['shiftleft'] = false;
+            if (e.code === 'ShiftRight') keys['shiftright'] = false;
+        });
+
+        // Menu functionality
+        function setupMenuListeners() {
+            // Menu button
+            document.getElementById('menuBtn').addEventListener('click', showMainMenu);
+            
+            // Skin selection
+            document.querySelectorAll('#player1Skins .skin-option').forEach(skin => {
+                skin.addEventListener('click', () => {
+                    document.querySelectorAll('#player1Skins .skin-option').forEach(s => s.classList.remove('selected'));
+                    skin.classList.add('selected');
+                    player1.color = skin.dataset.color;
+                });
+            });
+
+            document.querySelectorAll('#player2Skins .skin-option').forEach(skin => {
+                skin.addEventListener('click', () => {
+                    document.querySelectorAll('#player2Skins .skin-option').forEach(s => s.classList.remove('selected'));
+                    skin.classList.add('selected');
+                    player2.color = skin.dataset.color;
+                });
+            });
+
+            // AI character selection
+            document.querySelectorAll('.ai-character').forEach(char => {
+                char.addEventListener('click', () => {
+                    document.querySelectorAll('.ai-character').forEach(c => {
+                        c.style.border = '2px solid transparent';
+                        c.classList.remove('selected');
+                    });
+                    char.style.border = '2px solid #ffff00';
+                    char.classList.add('selected');
+                    aiCharacter = char.dataset.ai;
+                });
+            });
+
+            // Difficulty selection
+            document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    aiDifficulty = btn.dataset.difficulty;
+                });
+            });
+
+            // Show difficulty selector when AI mode is clicked
+            document.getElementById('aiModeBtn').addEventListener('click', () => {
+                const selector = document.getElementById('difficultySelector');
+                if (selector.style.display === 'none' || selector.style.display === '') {
+                    selector.style.display = 'block';
+                } else {
+                    startGame('ai');
+                }
+            });
+        }
+
+        function startGame(mode) {
+            gameMode = mode;
+            gameRunning = true;
+            
+            if (mode === 'ai') {
+                aiPlayer = createAI();
+                document.getElementById('player2Controls').innerHTML = '<strong>AI: ' + aiCharacter.toUpperCase() + '</strong><br>Difficulty: ' + aiDifficulty.toUpperCase();
+            } else {
+                aiPlayer = null;
+                document.getElementById('player2Controls').innerHTML = '<strong>PLAYER 2</strong><br>Arrow Keys: Move<br>ENTER: Power Shot<br>R-SHIFT: Steal/Block';
+            }
+            
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('ui').style.display = 'block';
+            restartGame();
+        }
+
+        function showMainMenu() {
+            gameRunning = false;
+            document.getElementById('mainMenu').style.display = 'flex';
+            document.getElementById('ui').style.display = 'none';
+        }
+
+        function createAI() {
+            const difficulties = {
+                easy: { speed: 4, reaction: 0.03, accuracy: 0.75, shotChance: 0.2, tackleChance: 0.4 },
+                medium: { speed: 5, reaction: 0.05, accuracy: 0.85, shotChance: 0.3, tackleChance: 0.6 },
+                hard: { speed: 6, reaction: 0.07, accuracy: 0.92, shotChance: 0.45, tackleChance: 0.8 },
+                insane: { speed: 7, reaction: 0.09, accuracy: 0.98, shotChance: 0.6, tackleChance: 0.95 }
+            };
+            
+            return {
+                ...difficulties[aiDifficulty],
+                shotCooldown: 0
+            };
+        }
+        
+        function createParticle(x, y, color) {
+            particles.push({
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 10,
+                vy: (Math.random() - 0.5) * 10,
+                life: 30,
+                color: color
+            });
+        }
+        
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                p.vx *= 0.98;
+                p.vy *= 0.98;
+                
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+        
+        function drawParticles() {
+            particles.forEach(p => {
+                ctx.save();
+                ctx.globalAlpha = p.life / 30;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+        }
+        
+        function updatePlayer(player) {
+            let moving = false;
+            
+            // Update cooldowns
+            if (player.tackleCooldown > 0) player.tackleCooldown--;
+            
+            if (player === player1) {
+                if (keys['w'] && player.y > 0) { player.y -= player.speed; moving = true; }
+                if (keys['s'] && player.y < canvas.height - player.height) { player.y += player.speed; moving = true; }
+                if (keys['a'] && player.x > 0) { player.x -= player.speed; moving = true; }
+                if (keys['d'] && player.x < canvas.width - player.width) { player.x += player.speed; moving = true; }
+                
+                // Tackle/Block with Left Shift
+                if ((keys['shift'] || keys['shiftleft']) && player.tackleCooldown <= 0) {
+                    performTackle(player, player2);
+                }
+                
+                if (keys[' ']) {
+                    if (ball.owner === player) {
+                        player.powerCharging = true;
+                        player.powerLevel = Math.min(player.powerLevel + 2, 100);
+                        document.getElementById('powerMeter').style.display = 'block';
+                        document.getElementById('powerBar').style.width = player.powerLevel + '%';
+                    }
+                } else if (player.powerCharging) {
+                    shootBall(player);
+                    player.powerCharging = false;
+                    player.powerLevel = 0;
+                    document.getElementById('powerMeter').style.display = 'none';
+                }
+            } else if (gameMode === 'ai' && aiPlayer) {
+                updateAI(player);
+            } else {
+                if (keys['arrowup'] && player.y > 0) { player.y -= player.speed; moving = true; }
+                if (keys['arrowdown'] && player.y < canvas.height - player.height) { player.y += player.speed; moving = true; }
+                if (keys['arrowleft'] && player.x > 0) { player.x -= player.speed; moving = true; }
+                if (keys['arrowright'] && player.x < canvas.width - player.width) { player.x += player.speed; moving = true; }
+                
+                // Tackle/Block with Right Shift
+                if ((keys['shift'] || keys['shiftright']) && player.tackleCooldown <= 0) {
+                    performTackle(player, player1);
+                }
+                
+                if (keys['enter']) {
+                    if (ball.owner === player) {
+                        player.powerCharging = true;
+                        player.powerLevel = Math.min(player.powerLevel + 2, 100);
+                        document.getElementById('powerMeter').style.display = 'block';
+                        document.getElementById('powerBar').style.width = player.powerLevel + '%';
+                    }
+                } else if (player.powerCharging) {
+                    shootBall(player);
+                    player.powerCharging = false;
+                    player.powerLevel = 0;
+                    document.getElementById('powerMeter').style.display = 'none';
+                }
+            }
+            
+            if (moving) {
+                createParticle(player.x + player.width/2, player.y + player.height, player.color);
+            }
+            
+            // Ball possession logic
+            if (!ball.owner && !ball.bouncing) {
+                const ballDist = Math.sqrt((ball.x - (player.x + player.width/2)) ** 2 + (ball.y - (player.y + player.height/2)) ** 2);
+                if (ballDist < 30) {
+                    ball.owner = player;
+                    ball.vx = 0;
+                    ball.vy = 0;
+                }
+            }
+            
+            // Move ball with player if they have possession
+            if (ball.owner === player) {
+                ball.x = player.x + player.width/2;
+                ball.y = player.y + player.height/2 - 15;
+            }
+        }
+        
+        function performTackle(attacker, defender) {
+            const dx = defender.x - attacker.x;
+            const dy = defender.y - attacker.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            
+            if (distance < attacker.tackleRange) {
+                attacker.tackling = true;
+                attacker.tackleCooldown = 120; // 2 second cooldown
+                
+                // Steal ball if defender has it
+                if (ball.owner === defender) {
+                    ball.owner = null;
+                    ball.vx = (Math.random() - 0.5) * 8;
+                    ball.vy = (Math.random() - 0.5) * 8;
+                    ball.bouncing = true;
+                    
+                    // Show steal text
+                    showStealText(attacker, defender);
+                    
+                    // Knockback effect
+                    const knockback = 30;
+                    defender.x += (dx / distance) * knockback;
+                    defender.y += (dy / distance) * knockback;
+                    
+                    // Keep defender in bounds
+                    defender.x = Math.max(0, Math.min(canvas.width - defender.width, defender.x));
+                    defender.y = Math.max(0, Math.min(canvas.height - defender.height, defender.y));
+                } else {
+                    // Show block text if no ball to steal
+                    showBlockText(attacker.x, attacker.y, attacker.color);
+                }
+                
+                // Tackle particles
+                for (let i = 0; i < 20; i++) {
+                    createParticle(
+                        attacker.x + attacker.width/2, 
+                        attacker.y + attacker.height/2, 
+                        attacker.color
+                    );
+                }
+                
+                setTimeout(() => {
+                    attacker.tackling = false;
+                }, 300);
+            }
+        }
+        
+        function showStealText(attacker, defender) {
+            const stealText = document.createElement('div');
+            stealText.style.cssText = `
+                position: absolute;
+                left: ${attacker.x}px;
+                top: ${attacker.y - 30}px;
+                color: ${attacker.color};
+                font-family: 'Orbitron', monospace;
+                font-size: 1.8em;
+                font-weight: 900;
+                text-shadow: 0 0 15px ${attacker.color};
+                pointer-events: none;
+                z-index: 1500;
+                animation: stealFloat 2s ease-out forwards;
+            `;
+            
+            // Determine player name
+            let playerName = '';
+            if (attacker === player1) {
+                playerName = 'PLAYER 1';
+            } else if (gameMode === 'ai' && attacker === player2) {
+                playerName = 'AI';
+            } else {
+                playerName = 'PLAYER 2';
+            }
+            
+            stealText.textContent = `${playerName} STEAL!`;
+            document.body.appendChild(stealText);
+            
+            setTimeout(() => stealText.remove(), 2000);
+        }
+        
+        function showBlockText(x, y, color) {
+            const blockText = document.createElement('div');
+            blockText.style.cssText = `
+                position: absolute;
+                left: ${x}px;
+                top: ${y - 30}px;
+                color: ${color};
+                font-family: 'Orbitron', monospace;
+                font-size: 1.5em;
+                font-weight: 900;
+                text-shadow: 0 0 10px ${color};
+                pointer-events: none;
+                z-index: 1500;
+                animation: blockFloat 1.5s ease-out forwards;
+            `;
+            blockText.textContent = 'BLOCK!';
+            document.body.appendChild(blockText);
+            
+            setTimeout(() => blockText.remove(), 1500);
+        }
+
+        function updateAI(player) {
+            if (!aiPlayer) return;
+            
+            if (aiPlayer.shotCooldown > 0) aiPlayer.shotCooldown--;
+            if (player.tackleCooldown > 0) player.tackleCooldown--;
+            
+            const ballDist = Math.sqrt((ball.x - player.x) ** 2 + (ball.y - player.y) ** 2);
+            const opponent = player1; // AI is always player2, so opponent is player1
+            const opponentDist = Math.sqrt((opponent.x - player.x) ** 2 + (opponent.y - player.y) ** 2);
+            
+            let targetX = ball.x;
+            let targetY = ball.y;
+            let shouldShoot = false;
+            let shouldTackle = false;
+            
+            // AI Decision Making
+            if (!ball.owner) {
+                // Ball is free - go get it
+                targetX = ball.x;
+                targetY = ball.y;
+            } else if (ball.owner === player) {
+                // AI has the ball - smart shooting position
+                const distToHoop = Math.sqrt((hoop1.x - player.x) ** 2 + (hoop1.rimY - player.y) ** 2);
+                
+                // Move to optimal shooting position based on AI character
+                switch(aiCharacter) {
+                    case 'shooter':
+                        // Position for 3-pointer
+                        targetX = hoop1.x + 220;
+                        targetY = hoop1.rimY;
+                        if (distToHoop > 200 && distToHoop < 350 && aiPlayer.shotCooldown <= 0) {
+                            shouldShoot = true;
+                        }
+                        break;
+                    case 'dunker':
+                        // Prioritize dunk board if available
+                        if (dunkBoard.active) {
+                            targetX = dunkBoard.x + dunkBoard.width/2;
+                            targetY = dunkBoard.y + dunkBoard.height/2;
+                            if (distToHoop < 200 && aiPlayer.shotCooldown <= 0) {
+                                shouldShoot = true;
+                            }
+                        } else {
+                            // Get close to basket
+                            targetX = hoop1.x + 80;
+                            targetY = hoop1.rimY;
+                            if (distToHoop < 150 && aiPlayer.shotCooldown <= 0) {
+                                shouldShoot = true;
+                            }
+                        }
+                        break;
+                    case 'playmaker':
+                        // Balanced approach
+                        targetX = hoop1.x + 150;
+                        targetY = hoop1.rimY;
+                        if (distToHoop < 250 && aiPlayer.shotCooldown <= 0) {
+                            shouldShoot = true;
+                        }
+                        break;
+                    case 'wildcard':
+                        // Shoot from anywhere
+                        if (distToHoop < 400 && aiPlayer.shotCooldown <= 0) {
+                            shouldShoot = Math.random() < 0.4;
+                        }
+                        break;
+                }
+                
+                // Check if AI can dunk
+                const onDunkBoard = dunkBoard.active && 
+                    player.x + player.width > dunkBoard.x && 
+                    player.x < dunkBoard.x + dunkBoard.width &&
+                    player.y + player.height > dunkBoard.y && 
+                    player.y < dunkBoard.y + dunkBoard.height;
+                
+                if (onDunkBoard && distToHoop < 200) {
+                    // AI goes for dunk - charge to max power
+                    player.powerCharging = true;
+                    player.powerLevel = Math.min(player.powerLevel + 4, 100);
+                    
+                    if (player.powerLevel >= 99) {
+                        shouldShoot = true;
+                    } else {
+                        shouldShoot = false; // Keep charging for dunk
+                    }
+                } else if (shouldShoot) {
+                    // Regular shot - charge power for better accuracy
+                    player.powerCharging = true;
+                    player.powerLevel = Math.min(player.powerLevel + 2, 100);
+                    
+                    // Shoot when power is optimal for distance
+                    const optimalPower = Math.min(90, 40 + (distToHoop / 10));
+                    if (player.powerLevel >= optimalPower) {
+                        shouldShoot = true;
+                    } else {
+                        shouldShoot = false; // Keep charging
+                    }
+                }
+            } else if (ball.owner === opponent) {
+                // Opponent has ball - try to tackle or defend
+                targetX = opponent.x;
+                targetY = opponent.y;
+                
+                // Tackle if close enough and not on cooldown
+                if (opponentDist < player.tackleRange && player.tackleCooldown <= 0) {
+                    shouldTackle = Math.random() < aiPlayer.tackleChance; // Use dedicated tackle chance
+                }
+            }
+            
+            // Keep AI in safe areas
+            targetX = Math.max(80, Math.min(canvas.width - 80, targetX));
+            targetY = Math.max(80, Math.min(canvas.height - 80, targetY));
+            
+            // Move AI toward target
+            const dx = targetX - player.x;
+            const dy = targetY - player.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            
+            if (distance > 3) {
+                const moveX = (dx / distance) * aiPlayer.speed;
+                const moveY = (dy / distance) * aiPlayer.speed;
+                
+                player.x = Math.max(60, Math.min(canvas.width - player.width - 60, player.x + moveX));
+                player.y = Math.max(60, Math.min(canvas.height - player.height - 60, player.y + moveY));
+                
+                if (Math.random() < 0.1) {
+                    createParticle(player.x + player.width/2, player.y + player.height, player.color);
+                }
+            }
+            
+            // AI Actions
+            if (shouldTackle) {
+                performTackle(player, opponent);
+            }
+            
+            if (shouldShoot && ball.owner === player) {
+                shootBall(player);
+                player.powerCharging = false;
+                player.powerLevel = 0;
+                aiPlayer.shotCooldown = 60;
+            }
+        }
+        
+        function shootBall(player) {
+            if (ball.owner !== player) return;
+            
+            const targetHoop = player === player1 ? hoop2 : hoop1;
+            const dx = targetHoop.x - ball.x;
+            const dy = targetHoop.rimY - ball.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            
+            const power = player.powerLevel / 100;
+            let baseForce = 12 + (power * 8);
+            
+            // Check if player is on dunk board for dunk shot
+            const onDunkBoard = dunkBoard.active && 
+                player.x + player.width > dunkBoard.x && 
+                player.x < dunkBoard.x + dunkBoard.width &&
+                player.y + player.height > dunkBoard.y && 
+                player.y < dunkBoard.y + dunkBoard.height;
+            
+            if (onDunkBoard && power >= 0.99) {
+                // DUNK! - Special dunk sequence
+                performDunk(player, targetHoop);
+                return; // Exit early, dunk handles everything
+            } else {
+                // Regular shot with reduced power
+                baseForce = 8 + (power * 6); // Reduced from 12 + (power * 8)
+                
+                // AI gets accuracy bonus for better shooting
+                if (gameMode === 'ai' && player === player2 && aiPlayer) {
+                    // Improved AI accuracy system
+                    const aimAccuracy = aiPlayer.accuracy;
+                    const aimError = (1 - aimAccuracy) * 25; // Further reduced error range
+                    
+                    // Add slight random error to AI shots (much more accurate)
+                    const errorX = (Math.random() - 0.5) * aimError;
+                    const errorY = (Math.random() - 0.5) * aimError * 0.7; // Less vertical error
+                    
+                    // Adjust target with error
+                    const adjustedDx = dx + errorX;
+                    const adjustedDy = dy + errorY;
+                    const adjustedDistance = Math.sqrt(adjustedDx*adjustedDx + adjustedDy*adjustedDy);
+                    
+                    // AI power adjustment for distance with better calculation
+                    baseForce = 6.5 + (distance / 30) + (power * 4.5);
+                    
+                    // Better arc calculation for AI
+                    const arcAdjustment = 2.2 + (distance / 150);
+                    
+                    ball.vx = (adjustedDx / adjustedDistance) * baseForce;
+                    ball.vy = (adjustedDy / adjustedDistance) * baseForce - arcAdjustment;
+                } else {
+                    // Human player shooting (reduced power)
+                    ball.vx = (dx / distance) * baseForce;
+                    ball.vy = (dy / distance) * baseForce - 3; // Reduced from -4
+                }
+            }
+            
+            // Store shot location for 3-point detection
+            ball.lastShotX = ball.x;
+            ball.lastShotY = ball.y;
+            
+            ball.owner = null;
+            ball.bouncing = true;
+            
+            // Shot particles
+            for (let i = 0; i < 15; i++) {
+                createParticle(ball.x, ball.y, player.color);
+            }
+            
+            // Reset bouncing after delay
+            setTimeout(() => {
+                ball.bouncing = false;
+            }, 1000);
+        }
+        
+        function updateBall() {
+            if (ball.owner) return; // Ball is being carried
+            
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+            
+            // Basketball physics - no gravity when not shot
+            if (ball.bouncing) {
+                ball.vy += 0.15; // Light gravity only when shot
+            }
+            
+            ball.vx *= 0.98; // Air resistance
+            ball.vy *= 0.99; // Vertical friction
+            
+            // Bounce off floor
+            if (ball.y + ball.radius >= canvas.height) {
+                if (ball.bouncing) {
+                    ball.vy = -ball.vy * 0.6;
+                    ball.y = canvas.height - ball.radius;
+                    ball.vx *= 0.9;
+                    createParticle(ball.x, ball.y, '#ffffff');
+                    
+                    // Stop small bounces
+                    if (Math.abs(ball.vy) < 1.5) {
+                        ball.vy = 0;
+                        ball.bouncing = false;
+                    }
+                } else {
+                    // Ball settles on ground when not bouncing
+                    ball.y = canvas.height - ball.radius;
+                    ball.vy = 0;
+                }
+            }
+            
+            // Bounce off ceiling
+            if (ball.y - ball.radius <= 0) {
+                ball.vy = -ball.vy * 0.4;
+                ball.y = ball.radius;
+            }
+            
+            // Bounce off walls
+            if (ball.x - ball.radius <= 0) {
+                ball.vx = -ball.vx * 0.7;
+                ball.x = ball.radius;
+            }
+            if (ball.x + ball.radius >= canvas.width) {
+                ball.vx = -ball.vx * 0.7;
+                ball.x = canvas.width - ball.radius;
+            }
+            
+            // Check for scoring
+            checkScoring();
+            
+            // Limit ball speed
+            const speed = Math.sqrt(ball.vx*ball.vx + ball.vy*ball.vy);
+            if (speed > ball.maxSpeed) {
+                ball.vx = (ball.vx / speed) * ball.maxSpeed;
+                ball.vy = (ball.vy / speed) * ball.maxSpeed;
+            }
+            
+            // Stop very slow movement
+            if (Math.abs(ball.vx) < 0.3) ball.vx = 0;
+            if (Math.abs(ball.vy) < 0.3 && !ball.bouncing) ball.vy = 0;
+        }
+        
+        function checkScoring() {
+            // Check if ball goes through hoops with proper 3-point detection
+            if (ball.y > hoop1.y && ball.y < hoop1.y + hoop1.height) {
+                if (ball.x > hoop1.x && ball.x < hoop1.x + hoop1.width && ball.vy > 0) {
+                    // Player 2 scored (shooting at hoop1)
+                    // 3-pointer if shot from beyond the arc (200+ pixels from hoop)
+                    const shotDistance = Math.sqrt((ball.lastShotX - hoop1.x) ** 2 + (ball.lastShotY - hoop1.rimY) ** 2);
+                    const points = shotDistance > 200 ? 3 : 2;
+                    score2 += points;
+                    
+                    // Show point value
+                    showPointsScored(points, ball.x, ball.y, player2.color);
+                    resetBall();
+                    for (let i = 0; i < 50; i++) {
+                        createParticle(ball.x, ball.y, player2.color);
+                    }
+                }
+            }
+            
+            if (ball.y > hoop2.y && ball.y < hoop2.y + hoop2.height) {
+                if (ball.x > hoop2.x && ball.x < hoop2.x + hoop2.width && ball.vy > 0) {
+                    // Player 1 scored (shooting at hoop2)
+                    // 3-pointer if shot from beyond the arc (200+ pixels from hoop)
+                    const shotDistance = Math.sqrt((ball.lastShotX - hoop2.x) ** 2 + (ball.lastShotY - hoop2.rimY) ** 2);
+                    const points = shotDistance > 200 ? 3 : 2;
+                    score1 += points;
+                    
+                    // Show point value
+                    showPointsScored(points, ball.x, ball.y, player1.color);
+                    resetBall();
+                    for (let i = 0; i < 50; i++) {
+                        createParticle(ball.x, ball.y, player1.color);
+                    }
+                }
+            }
+        }
+        
+        function showPointsScored(points, x, y, color) {
+            const pointsText = document.createElement('div');
+            pointsText.style.cssText = `
+                position: absolute;
+                left: ${x}px;
+                top: ${y}px;
+                color: ${color};
+                font-family: 'Orbitron', monospace;
+                font-size: 2em;
+                font-weight: 900;
+                text-shadow: 0 0 10px ${color};
+                pointer-events: none;
+                z-index: 1000;
+                animation: scoreFloat 2s ease-out forwards;
+            `;
+            pointsText.textContent = points === 3 ? '3 POINTS!' : '2 POINTS!';
+            document.body.appendChild(pointsText);
+            
+            setTimeout(() => pointsText.remove(), 2000);
+        }
+        
+        function performDunk(player, targetHoop) {
+            // Start dunk cutscene
+            gameRunning = false;
+            ball.owner = null;
+            
+            // Create dunk cutscene overlay
+            const cutscene = document.createElement('div');
+            cutscene.id = 'dunkCutscene';
+            cutscene.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: radial-gradient(circle, rgba(255,255,0,0.3), rgba(0,0,0,0.8));
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                z-index: 2000;
+                pointer-events: all;
+            `;
+            
+            cutscene.innerHTML = `
+                <div style="font-family: 'Orbitron', monospace; font-size: 5em; font-weight: 900; color: #ffff00; text-shadow: 0 0 30px #ffff00; margin-bottom: 20px; animation: dunkPulse 0.5s ease-in-out infinite alternate;">
+                    SLAM DUNK!
+                </div>
+                <div style="font-family: 'Orbitron', monospace; font-size: 2em; color: #00ffff; text-shadow: 0 0 15px #00ffff;">
+                    ${player === player1 ? 'PLAYER 1' : (gameMode === 'ai' ? 'AI PLAYER' : 'PLAYER 2')} SCORES!
+                </div>
+            `;
+            
+            document.body.appendChild(cutscene);
+            
+            // Animate ball to hoop
+            const startX = ball.x;
+            const startY = ball.y;
+            const endX = targetHoop.x + 10;
+            const endY = targetHoop.rimY;
+            
+            let progress = 0;
+            const dunkAnimation = setInterval(() => {
+                progress += 0.05;
+                
+                // Smooth animation to hoop
+                ball.x = startX + (endX - startX) * progress;
+                ball.y = startY + (endY - startY) * progress;
+                
+                // Particle trail
+                createParticle(ball.x, ball.y, '#ffff00');
+                
+                if (progress >= 1) {
+                    clearInterval(dunkAnimation);
+                    
+                    // Score the dunk
+                    const points = 2; // Dunks are always 2 points
+                    if (player === player1) {
+                        score1 += points;
+                    } else {
+                        score2 += points;
+                    }
+                    
+                    // Massive particle explosion
+                    for (let i = 0; i < 100; i++) {
+                        createParticle(ball.x, ball.y, player.color);
+                        createParticle(ball.x, ball.y, '#ffff00');
+                        createParticle(ball.x, ball.y, '#ffffff');
+                    }
+                    
+                    // Screen shake effect
+                    document.body.style.animation = 'screenShake 0.5s ease-in-out';
+                    
+                    setTimeout(() => {
+                        // Remove cutscene and resume game
+                        cutscene.remove();
+                        document.body.style.animation = '';
+                        resetBall();
+                        gameRunning = true;
+                    }, 2000);
+                }
+            }, 16);
+        }
+        
+        function showDunkText(x, y, color) {
+            const dunkText = document.createElement('div');
+            dunkText.style.cssText = `
+                position: absolute;
+                left: ${x}px;
+                top: ${y}px;
+                color: #ffff00;
+                font-family: 'Orbitron', monospace;
+                font-size: 3em;
+                font-weight: 900;
+                text-shadow: 0 0 20px #ffff00;
+                pointer-events: none;
+                z-index: 1000;
+                animation: dunkFloat 3s ease-out forwards;
+            `;
+            dunkText.textContent = 'DUNK!';
+            document.body.appendChild(dunkText);
+            
+            setTimeout(() => dunkText.remove(), 3000);
+        }
+        
+        function updateDunkBoard() {
+            if (dunkBoard.active) {
+                dunkBoard.timeLeft--;
+                if (dunkBoard.timeLeft <= 0) {
+                    dunkBoard.active = false;
+                    dunkBoard.nextSpawn = 300 + Math.random() * 600; // 5-15 seconds
+                }
+            } else {
+                dunkBoard.nextSpawn--;
+                if (dunkBoard.nextSpawn <= 0) {
+                    spawnDunkBoard();
+                }
+            }
+        }
+        
+        function spawnDunkBoard() {
+            dunkBoard.active = true;
+            dunkBoard.timeLeft = 600; // 10 seconds at 60fps
+            
+            // Spawn in random location but not too close to hoops
+            dunkBoard.x = 200 + Math.random() * (canvas.width - 400);
+            dunkBoard.y = 100 + Math.random() * (canvas.height - 200);
+            
+            // Visual spawn effect
+            for (let i = 0; i < 20; i++) {
+                createParticle(dunkBoard.x + dunkBoard.width/2, dunkBoard.y + dunkBoard.height/2, '#ffff00');
+            }
+        }
+        
+        function drawDunkBoard() {
+            if (!dunkBoard.active) return;
+            
+            // Pulsing glow effect
+            const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
+            
+            ctx.shadowColor = '#ffff00';
+            ctx.shadowBlur = 20 * pulse;
+            
+            // Draw dunk board
+            ctx.fillStyle = '#ffff00';
+            ctx.fillRect(dunkBoard.x, dunkBoard.y, dunkBoard.width, dunkBoard.height);
+            
+            // Draw border
+            ctx.strokeStyle = '#ff8000';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(dunkBoard.x, dunkBoard.y, dunkBoard.width, dunkBoard.height);
+            
+            // Draw text
+            ctx.fillStyle = '#000000';
+            ctx.font = '12px Orbitron';
+            ctx.textAlign = 'center';
+            ctx.fillText('DUNK', dunkBoard.x + dunkBoard.width/2, dunkBoard.y + dunkBoard.height/2 + 4);
+            
+            // Timer bar
+            const timerWidth = (dunkBoard.timeLeft / 600) * dunkBoard.width;
+            ctx.fillStyle = '#00ff00';
+            ctx.fillRect(dunkBoard.x, dunkBoard.y - 8, timerWidth, 4);
+            
+            ctx.shadowBlur = 0;
+            ctx.textAlign = 'left';
+        }
+        
+        function resetBall() {
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            ball.vx = 0;
+            ball.vy = 0;
+            ball.owner = null;
+            ball.bouncing = false;
+        }
+        
+        function drawCourt() {
+            // Court lines
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 3;
+            
+            // Center line
+            ctx.beginPath();
+            ctx.moveTo(canvas.width/2, 0);
+            ctx.lineTo(canvas.width/2, canvas.height);
+            ctx.stroke();
+            
+            // Center circle
+            ctx.beginPath();
+            ctx.arc(canvas.width/2, canvas.height/2, 80, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // 3-point lines
+            ctx.beginPath();
+            ctx.arc(hoop1.x, hoop1.rimY, 200, -Math.PI/2, Math.PI/2);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(hoop2.x, hoop2.rimY, 200, Math.PI/2, 3*Math.PI/2);
+            ctx.stroke();
+            
+            // Draw hoops
+            drawHoop(hoop1);
+            drawHoop(hoop2);
+        }
+        
+        function drawHoop(hoop) {
+            // Backboard
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(hoop.x - 5, hoop.y, 5, hoop.height);
+            
+            // Rim
+            ctx.strokeStyle = '#ff8000';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(hoop.x, hoop.rimY);
+            ctx.lineTo(hoop.x + hoop.width, hoop.rimY);
+            ctx.stroke();
+            
+            // Net
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(hoop.x + i * 5 + 2, hoop.rimY);
+                ctx.lineTo(hoop.x + i * 5, hoop.rimY + 20);
+                ctx.stroke();
+            }
+        }
+        
+        function drawPlayer(player) {
+            ctx.shadowColor = player.color;
+            ctx.shadowBlur = 20;
+            
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            
+            // Power charging effect
+            if (player.powerCharging) {
+                ctx.strokeStyle = player.color;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(player.x + player.width/2, player.y + player.height/2, 30 + player.powerLevel/5, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            
+            // Tackling effect
+            if (player.tackling) {
+                ctx.strokeStyle = '#ff0000';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(player.x + player.width/2, player.y + player.height/2, player.tackleRange, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            
+            ctx.shadowBlur = 0;
+        }
+        
+        function drawBall() {
+            ctx.shadowColor = '#ff8000';
+            ctx.shadowBlur = 15;
+            
+            // Basketball color and pattern
+            ctx.fillStyle = '#ff8000';
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Basketball lines
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(ball.x - ball.radius, ball.y);
+            ctx.lineTo(ball.x + ball.radius, ball.y);
+            ctx.moveTo(ball.x, ball.y - ball.radius);
+            ctx.lineTo(ball.x, ball.y + ball.radius);
+            ctx.stroke();
+            
+            ctx.shadowBlur = 0;
+        }
+        
+        function updateTimer() {
+            if (gameRunning && gameTime > 0) {
+                gameTime--;
+                const minutes = Math.floor(gameTime / 60);
+                const seconds = gameTime % 60;
+                document.getElementById('timer').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (gameTime <= 0) {
+                    gameRunning = false;
+                    endGame();
+                }
+            }
+        }
+        
+        function endGame() {
+            let winner = score1 > score2 ? 'PLAYER 1 WINS!' : score2 > score1 ? 'PLAYER 2 WINS!' : 'TIE GAME!';
+            alert(`GAME OVER! ${winner}\nFinal Score: ${score1} - ${score2}`);
+            showMainMenu();
+        }
+        
+        function restartGame() {
+            score1 = 0;
+            score2 = 0;
+            gameTime = 240;
+            gameRunning = true;
+            
+            player1.x = canvas.width * 0.2;
+            player1.y = canvas.height / 2;
+            player1.powerCharging = false;
+            player1.powerLevel = 0;
+            player1.tackleCooldown = 0;
+            
+            player2.x = canvas.width * 0.8;
+            player2.y = canvas.height / 2;
+            player2.powerCharging = false;
+            player2.powerLevel = 0;
+            player2.tackleCooldown = 0;
+            
+            resetBall();
+            particles = [];
+            
+            // Reset dunk board
+            dunkBoard.active = false;
+            dunkBoard.nextSpawn = 300 + Math.random() * 300; // 5-10 seconds initial spawn
+            
+            if (gameMode === 'ai' && aiPlayer) {
+                aiPlayer.shotCooldown = 0;
+            }
+            
+            updateUI();
+        }
+        
+        function updateUI() {
+            document.getElementById('player1Score').textContent = score1;
+            document.getElementById('player2Score').textContent = score2;
+        }
+        
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawCourt();
+            drawDunkBoard();
+            
+            if (gameRunning) {
+                updatePlayer(player1);
+                updatePlayer(player2);
+                updateBall();
+                updateDunkBoard();
+            }
+            
+            updateParticles();
+            
+            drawPlayer(player1);
+            drawPlayer(player2);
+            drawBall();
+            drawParticles();
+            
+            updateUI();
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Initialize menu listeners when page loads
+        window.addEventListener('load', () => {
+            setupMenuListeners();
+        });
+        
+        // Timer
+        setInterval(updateTimer, 1000);
+        
+        // Start game
+        gameLoop();
+    </script>
+</body>
+</html>  
+      <style>
+        @keyframes scoreFloat {
+            0% { transform: translateY(0px); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+        </style>     
+   <style>
+        @keyframes dunkFloat {
+            0% { transform: translateY(0px) scale(1); opacity: 1; }
+            50% { transform: translateY(-30px) scale(1.2); opacity: 1; }
+            100% { transform: translateY(-60px) scale(0.8); opacity: 0; }
+        }
+        </style>        <st
+yle>
+        @keyframes dunkPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+        
+        @keyframes screenShake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        </style>   
+     <style>
+        @keyframes stealFloat {
+            0% { transform: translateY(0px) scale(1); opacity: 1; }
+            50% { transform: translateY(-20px) scale(1.1); opacity: 1; }
+            100% { transform: translateY(-40px) scale(0.9); opacity: 0; }
+        }
+        
+        @keyframes blockFloat {
+            0% { transform: translateY(0px) scale(1); opacity: 1; }
+            50% { transform: translateY(-15px) scale(1.05); opacity: 1; }
+            100% { transform: translateY(-30px) scale(0.8); opacity: 0; }
+        }
+        </style>
